@@ -7,7 +7,8 @@ import statsmodels.formula.api as smf
 from scipy import stats
 import plotly.graph_objects as go
 import streamlit as st
-df = pd.read_csv('/home/gdstantonlab/mxw010/Data/Synergy/data/average_dose.csv')
+#df = pd.read_csv('/home/gdstantonlab/mxw010/Data/Synergy/data/average_dose.csv')
+df = pd.read_csv('data/average_dose.csv')
 
 st.title('Dose Response Curve')
 
