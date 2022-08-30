@@ -46,10 +46,26 @@ Y2 = glm_model2.predict(exog=dict(Drug=X2))
 
 from plotly.subplots import make_subplots
 fig = make_subplots(rows=1, cols = 2)
-fig.add_trace(go.Scatter(x=df1[df1['Name'] == name1]['Drug'], y = df1[df1['Name'] == name1]['Average'], mode = 'markers', marker_color='red'), row=1, col=1)
-fig.add_trace(go.Scatter(x=X1, y=Y1, marker_color='red',name=name2), row=1, col=1)
-fig.add_trace(go.Scatter(x=df1[df1['Name'] == name2]['Drug'], y = df1[df1['Name'] == name2]['Average'], mode = 'markers', marker_color='blue'), row=1, col=2)
-fig.add_trace(go.Scatter(x=X2, y=Y2, marker_color='blue', name=name1), row=1, col=2)
+fig.add_trace(go.Scatter(x=df1[df1['Name'] == name1]['Drug'],
+                         y = df1[df1['Name'] == name1]['Average'], 
+                         mode = 'markers', 
+                         marker_color='red'), 
+              row=1, col=1)
+fig.add_trace(go.Scatter(x=X1, 
+                         y=Y1, 
+                         marker_color='red',
+                         name=name2), 
+              row=1, col=1)
+fig.add_trace(go.Scatter(x=df1[df1['Name'] == name2]['Drug'], 
+                         y = df1[df1['Name'] == name2]['Average'], 
+                         mode = 'markers', 
+                         marker_color='blue'), 
+              row=1, col=2)
+fig.add_trace(go.Scatter(x=X2, 
+                         y=Y2, 
+                         marker_color='blue', 
+                         name=name1), 
+              row=1, col=2)
 fig.update_traces(marker=dict(size=12,
                               line=dict(width=2,
                                         color='DarkSlateGrey')),
