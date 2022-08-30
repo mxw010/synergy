@@ -1,4 +1,3 @@
-
 import plotly.express as px
 import pandas as pd
 import numpy as np
@@ -7,8 +6,7 @@ import statsmodels.formula.api as smf
 from scipy import stats
 import plotly.graph_objects as go
 import streamlit as st
-#df = pd.read_csv('/home/gdstantonlab/mxw010/Data/Synergy/data/average_dose.csv')
-df = pd.read_csv('data/average_dose.csv')
+df = pd.read_csv('/home/gdstantonlab/mxw010/Data/Synergy/data/average_dose.csv')
 
 st.title('Dose Response Curve')
 
@@ -20,10 +18,11 @@ st.write('Drug1 you selected is:', name1)
 st.write('Drug2 you selected is:', name2)
 #
 #
-#name1 = 'Midostaurin_1'
-#name2 = 'JQ1_2'
+#name1 = 'Lenalidomide_1'
+#name2 = 'EPZ-5676_2'
 data2 = data1[data1['Name2'] == name2]
 
+#experiment = 'MOM14_ASSAY_ID_8872'
 experiment = st.selectbox('Choose Experiment', set(data2['Experiment']))
 
 st.write('Experiment you selected is:', experiment)
@@ -45,14 +44,13 @@ glm_model2 = smf.glm('Average ~ Drug', df1[df1['Name'] == name2], family=sm.fami
 X2 = np.linspace(drug2_min,drug2_max,100)
 Y2 = glm_model2.predict(exog=dict(Drug=X2))
 
-
-fig = px.scatter(df1, x="Drug", y="Average", color="Name")
-_ =fig.add_trace(go.Scatter(x=X1, y=Y1, marker_color='red',name=name2))
-_ = fig.add_trace(go.Scatter(x=X2, y=Y2, marker_color='blue', name=name1))
+from plotly.subplots import make_subplots
+fig = make_subplots(rows=1, cols = 2)
+fig.add_trace(go.Scatter(x=df1[df1['Name'] == name1]['Drug'], y = df1[df1['Name'] == name1]['Average'], mode = 'markers', marker_color='red'), row=1, col=1)
+fig.add_trace(go.Scatter(x=X1, y=Y1, marker_color='red',name=name2), row=1, col=1)
+fig.add_trace(go.Scatter(x=df1[df1['Name'] == name2]['Drug'], y = df1[df1['Name'] == name2]['Average'], mode = 'markers', marker_color='blue'), row=1, col=2)
+fig.add_trace(go.Scatter(x=X2, y=Y2, marker_color='blue', name=name1), row=1, col=2)
 fig.update_traces(marker=dict(size=12,
                               line=dict(width=2,
                                         color='DarkSlateGrey')),
                   selector=dict(mode='markers'))
-#fig.show()
-
-st.plotly_chart(fig)
