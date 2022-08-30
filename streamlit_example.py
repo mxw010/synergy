@@ -70,3 +70,5 @@ fig.update_traces(marker=dict(size=12,
                               line=dict(width=2,
                                         color='DarkSlateGrey')),
                   selector=dict(mode='markers'))
+
+st.plotly_chart(fig)
