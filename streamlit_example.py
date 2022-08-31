@@ -190,7 +190,7 @@ for j in range(0,Y2.shape[1]):
                   row=1,col=2)
 
 #adjustments
-IC50.update_xaxes(range=[xmin-(xmax-xmin)/20,xmax+(xmax-xmin)/20],tick0 = xmin, tickfont_size = 16)
+#IC50.update_xaxes(range=[xmin-(xmax-xmin)/20,xmax+(xmax-xmin)/20],tick0 = xmin, tickfont_size = 16)
 IC50.update_yaxes(range=[-0.05,1.05], tick0=0, tickformat = ',.0%', tickfont_size = 16)
 IC50.update_layout(legend=dict(font_size = 20, title_text='Dose Combination'),
                 title = dict(text='Shifting IC50 Curves', x=0.5, font_size=30),
