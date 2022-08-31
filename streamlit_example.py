@@ -11,6 +11,7 @@ from plotly.subplots import make_subplots
 st.title('Drug Synergy')
 
 df = pd.read_csv('data/average_dose.csv')
+compiled = pd.read_csv('data/compiled_plates.csv')
 name1 = 'Tazemetostat_1'
 name2 = 'JQ1_2'
 experiment = 'EOL1_ASSAY_ID_10946'
@@ -21,12 +22,8 @@ name2 = st.selectbox('Choose Drug 2', set(data1['Name2']))
 st.write('Drug1 you selected is:', name1)
 st.write('Drug2 you selected is:', name2)
 data2 = data1[data1['Name2'] == name2]
-
-
 experiment = st.selectbox('Choose Experiment', set(data2['Experiment']))
-
 st.write('Experiment you selected is:', experiment)
-
 df1 =data2[data2['Experiment'] == experiment]
 df1 = df1[['Name', 'Name1', 'Name2', 'Drug', 'Average']]
 
