@@ -143,7 +143,7 @@ IC50 = make_subplots(rows=1, cols = 2,
                     y_title='Percent Survived',
                     vertical_spacing=0.1,
                     horizontal_spacing=0.085,
-                    subplot_titles = [name1, name2]
+                    subplot_titles = [name2, name1]
                     )
 #scatter plots
 IC50.add_trace(go.Scatter(x=compiled_avg['Drug1'],
