@@ -99,13 +99,6 @@ st.plotly_chart(dose_response)
 
 # ##############fig 2################
 # #IC50 plots
-compiled = pd.read_csv('data/compiled_plates.csv')
-name1 = 'Tazemetostat_1'
-name2 = 'JQ1_2'
-experiment = 'EOL1_ASSAY_ID_10946'
-
-
-
 compiled_subset = compiled[(compiled['Name1'] == name1) & (compiled['Name2'] == name2) & (compiled['Experiment'] == experiment)]
 compiled_avg = compiled_subset.groupby(['Name1','Drug1','Group1','Name2','Drug2','Group2'], as_index=False).agg({'Value': ['mean', 'std']})
 compiled_avg.columns = ['Name1','Drug1','Group1','Name2','Drug2','Group2', 'Mean', 'sd']
