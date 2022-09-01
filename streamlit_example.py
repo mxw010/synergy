@@ -1,3 +1,4 @@
+from curses.ascii import DC1
 import plotly.express as px
 import pandas as pd
 import numpy as np
@@ -82,7 +83,7 @@ dose_response.update_traces(marker=dict(size=8,
 #change axes ranges to be consistent
 xmin = min([drug1_min,drug2_min])
 xmax = max([drug1_max,drug2_max])
-dose_response.update_xaxes(range=[xmin-(xmax-xmin)/20,xmax+(xmax-xmin)/20],tick0 = xmin, tickfont_size = 16)
+#dose_response.update_xaxes(range=[xmin-(xmax-xmin)/20,xmax+(xmax-xmin)/20],tick0 = xmin, tickfont_size = 16)
 dose_response.update_yaxes(range=[-0.05,1.05], tick0=0, tickformat = ',.0%', tickfont_size = 16)
 dose_response.update_layout(legend=dict(font_size = 20, title_text = 'Treatment'),
                 title = dict(text='Individual Dose Response Curves', x=0.5, font_size=30),
@@ -92,6 +93,7 @@ dose_response.update_layout(legend=dict(font_size = 20, title_text = 'Treatment'
 dose_response.layout.annotations[0]["font"] = {'size': 20}
 dose_response.layout.annotations[1]["font"] = {'size': 20}
 #dose_response.show()
+
 st.plotly_chart(dose_response)
 
 # ##############fig 2################
@@ -190,3 +192,123 @@ IC50.layout.annotations[0]["font"] = {'size': 20}
 IC50.layout.annotations[1]["font"] = {'size': 20}
 #IC50.show()
 st.plotly_chart(IC50)
+
+#FA plots
+FAdata = compiled_subset.groupby(['Name1','Drug1','Name2','Drug2'], as_index=False).agg({'Fa': ['mean']})
+FAdata.columns = ['Name1','Drug1','Name2','Drug2', 'Fa']
+
+#replace min with 0
+drug1_min = FAdata['Drug1'].min()
+drug2_min = FAdata['Drug2'].min()
+FAdata['Drug1'].replace({drug1_min:0}, inplace=True)
+FAdata['Drug2'].replace({drug2_min:0}, inplace=True)
+
+FAdata_wide = pd.pivot(FAdata, index='Drug2', columns='Drug1', values='Fa')
+
+# Fraction affected plot
+FAplot = go.Figure(data=go.Heatmap(
+                    z=FAdata_wide,
+                    x=FAdata_wide.columns.map(str),
+                    y=FAdata_wide.index.map(str),
+                    text = FAdata_wide,
+                    texttemplate="%{text:.2~%}",
+                    textfont={"size":16},
+                    colorscale = 'Reds'))
+
+FAplot.update_layout(title = dict(text='Percentage Affected', x=0.5, font_size=30),
+                   xaxis_title=name1 + ' Concentration (uM)',
+                   yaxis_title=name2 + ' Concentration (uM)')
+
+#FAplot.show()
+
+st.plotly_chart(FAplot)
+
+#Median Effect plot
+# Get the slope and intercept
+individual_doses = pd.read_csv('data/individual_doses.csv')
+
+individual_subset = individual_doses[(individual_doses['Name1'] == name1) & (individual_doses['Name2'] == name2) & (individual_doses['Experiment'] == experiment)]
+d1 = compiled_subset[(compiled_subset['Group2'] ==1) & (compiled_subset['Drug1'] != drug1_min)]
+d2 = compiled_subset[(compiled_subset['Group1'] ==1) & (compiled_subset['Drug2'] != drug2_min)]
+
+d1_model = smf.ols(formula='np.log10(FaFu) ~ np.log10(Drug1)', data=d1).fit()
+#coef d1_model.rsquared, d1_model.params
+
+d1_Dm = 10 ** (-d1_model.params[0]/d1_model.params[1])
+
+d2_model = smf.ols(formula='np.log10(FaFu) ~ np.log10(Drug2)', data=d2).fit()
+#coef d1_model.rsquared, d1_model.params
+
+d2_Dm = 10 ** (-d2_model.params[0]/d2_model.params[1])
+
+#LM fit
+drug1_min = individual_subset[individual_subset['Name'] == name1]['Drug'].min()
+drug1_max = individual_subset[individual_subset['Name'] == name1]['Drug'].max()
+drug2_min = individual_subset[individual_subset['Name'] == name2]['Drug'].min()
+drug2_max = individual_subset[individual_subset['Name'] == name2]['Drug'].max()
+X1 = np.linspace(drug1_min, drug1_max, 100)
+X2 = np.linspace(drug2_min, drug2_max,100)
+Y1 = d1_model.predict(exog=dict(Drug1=X1))
+Y2 = d2_model.predict(exog=dict(Drug2=X2))
+
+
+idx1 = (individual_subset['Drug'] == 0) & (individual_subset['Name'] == name1)
+individual_subset.loc[idx1, 'Drug'] = individual_subset.loc[idx1,'min1']/2
+idx2 = (individual_subset['Drug'] == 0) & (individual_subset['Name'] == name2)
+individual_subset.loc[idx2, 'Drug'] = individual_subset.loc[idx2,'min2']/2
+filter = (individual_subset['Drug1']  == individual_subset['min1'].iloc[0]/2) & (individual_subset['Drug2']  == individual_subset['min2'].iloc[0]/2)
+individual_subset = individual_subset.loc[~filter,:]
+
+#the figure
+med_effect = make_subplots(rows=1, cols = 2,
+                    x_title='log10[Dose(uM)]',
+                    y_title='log10(Fa/Fu)',
+                    vertical_spacing=0.1,
+                    horizontal_spacing=0.085,
+                    subplot_titles = [name2, name1]
+                    )
+
+med_effect.add_trace(go.Scatter(x=np.log10(individual_subset[individual_subset['Name'] == name1]['Drug']),
+                         y = np.log10(individual_subset[individual_subset['Name'] == name1]['FaFu']),
+                         mode = 'markers',
+                         marker_color='red',
+                         showlegend = False),
+              row=1, col=1)
+
+med_effect.add_trace(go.Scatter(x=np.log10(individual_subset[individual_subset['Name'] == name2]['Drug']),
+                         y = np.log10(individual_subset[individual_subset['Name'] == name2]['FaFu']),
+                         mode = 'markers',
+                         marker_color='blue',
+                         showlegend = False),
+              row=1, col=2)
+
+med_effect.add_trace(go.Scatter(x=np.log10(X1),
+                         y=Y1,
+                         marker_color='red',
+                         name=name2),
+              row=1, col=1)
+
+med_effect.add_trace(go.Scatter(x=np.log10(X2),
+                         y=Y2,
+                         marker_color='blue',
+                         name=name1),
+              row=1, col=2)
+
+dose_response.update_traces(marker=dict(size=8,
+                              line=dict(width=2,
+                                        color='DarkSlateGrey')),
+                  selector=dict(mode='markers'))
+#change axes ranges to be consistent
+xmin = min([drug1_min,drug2_min])
+xmax = max([drug1_max,drug2_max])
+#dose_response.update_xaxes(range=[xmin-(xmax-xmin)/20,xmax+(xmax-xmin)/20],tick0 = xmin, tickfont_size = 16)
+dose_response.update_yaxes(range=[-0.05,1.05], tick0=0, tickformat = ',.0%', tickfont_size = 16)
+dose_response.update_layout(legend=dict(font_size = 20, title_text = 'Treatment'),
+                title = dict(text='Individual Dose Response Curves', x=0.5, font_size=30),
+                legend_tracegroupgap= 30,
+                showlegend=False)
+#change axis title size
+dose_response.layout.annotations[0]["font"] = {'size': 20}
+dose_response.layout.annotations[1]["font"] = {'size': 20}
+
+med_effect.show()
