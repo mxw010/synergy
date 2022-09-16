@@ -12,20 +12,20 @@ from plotly.subplots import make_subplots
 st.title('Drug Synergy')
 
 df = pd.read_csv('data/average_dose.csv')
-#df['Name1'] = [x.replace("_1","") for x in df.Name1]
-#df['Name2'] = [x.replace("_2","") for x in df.Name2]
+df['Name1'] = [x.replace("_1","") for x in df.Name1]
+df['Name2'] = [x.replace("_2","") for x in df.Name2]
 compiled = pd.read_csv('data/compiled_plates.csv')
-#compiled['Name1'] = [x.replace("_1","") for x in compiled.Name1]
-#compiled['Name2'] = [x.replace("_2","") for x in compiled.Name2]
+compiled['Name1'] = [x.replace("_1","") for x in compiled.Name1]
+compiled['Name2'] = [x.replace("_2","") for x in compiled.Name2]
 
 individual_doses = pd.read_csv('data/individual_doses.csv')
-#individual_doses['Name1'] = [x.replace("_1","") for x in individual_doses.Name1]
-#individual_doses['Name2'] = [x.replace("_2","") for x in individual_doses.Name2]
+individual_doses['Name1'] = [x.replace("_1","") for x in individual_doses.Name1]
+individual_doses['Name2'] = [x.replace("_2","") for x in individual_doses.Name2]
 
 
-name1 = "EPZ-005687_1"
+#name1 = "EPZ-005687_1"
 #name2 = 'JQ1'
-name2 = "A-485_2"
+#name2 = "A-485_2"
 experiment = 'EOL1_ASSAY_ID_10946'
 name1 = st.selectbox('Choose Drug 1', set(df['Name1']))
 
@@ -41,10 +41,10 @@ df1 = df1[['Name', 'Name1', 'Name2', 'Drug', 'Average']]
 
 #dose response plot
 #prediction
-Name1 = name1
-Name2 = name2
-# Name1 = name1 + '_1'
-# Name2 = name2 + '_2'
+#Name1 = name1
+#Name2 = name2
+Name1 = name1 + '_1'
+Name2 = name2 + '_2'
 drug1_min = df1[df1['Name'] == Name1].Drug.min()
 drug1_max = df1[df1['Name'] == Name1].Drug.max()
 glm_model1 = smf.glm('Average ~ Drug', df1[df1['Name'] == Name1], family=sm.families.Binomial()).fit()
@@ -436,14 +436,14 @@ isobologram.add_trace(go.Scatter(x=isobol_dat.I1,
                                             cmax=np.log10(3),
                                             cmid=0),
                                 customdata=isobol_dat[['CI','CI_desc']],
-                                hovertemplate='Synergy = %{customdata[0]:.2} <br>Category = %{customdata[1]} <extra></extra>',
+                                hovertemplate='CI = %{customdata[0]:.2} <br>Category = %{customdata[1]} <extra></extra>',
                                 showlegend=False),
                       1,1)
 #texts
 isobologram.add_trace(go.Scatter(x=[2.7],
                                  y=[3],
                                  mode='text',
-                                 text=[r'$ \text{{{}}} \pm \text{{{}}}$ '.format(mean_CI, mean_CI_se)],
+                                 text=[ str(mean_CI) + "+/-" + str(mean_CI_se)],
                                  textposition='bottom center',
                                  textfont=dict(family='sans serif',
                                                size=20),
