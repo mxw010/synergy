@@ -354,7 +354,7 @@ med_effect.add_trace(go.Scatter(x= [xmin+0.2],
                                                 size=20)),
                      row=1,col=1)
 
-med_effect.add_trace(go.Scatter(x= [xmin+0.2],
+med_effect.add_trace(go.Scatter(x= [xmin+0.4],
                                 y= [ymax-0.2],
                                 mode='text',
                                 text= 'adj. R<sup>2</sup> = '+ str(np.round(d2_model.rsquared_adj,2)),
