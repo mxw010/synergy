@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots
 
+st.set_page_config(layout="wide")
 st.title('Drug Synergy')
 
 df = pd.read_csv('data/average_dose.csv')
@@ -23,12 +24,17 @@ individual_doses['Name1'] = [x.replace("_1","") for x in individual_doses.Name1]
 individual_doses['Name2'] = [x.replace("_2","") for x in individual_doses.Name2]
 
 
-#name1 = "EPZ-005687_1"
-#name2 = 'JQ1'
-#name2 = "A-485_2"
-experiment = 'EOL1_ASSAY_ID_10946'
-name1 = st.selectbox('Choose Drug 1', set(df['Name1']))
+name1 = "ORY-1001"
+name2 = 'Methotrexate'
 
+experiment = 'MOLM14_ASSAY_ID_8872'
+data1 = df[df['Name1']== name1]
+data2 = data1[data1['Name2'] == name2]
+df1 = data2[data2['Experiment'] == experiment]
+df1 = df1[['Name', 'Name1', 'Name2', 'Drug', 'Average']]
+
+
+name1 = st.selectbox('Choose Drug 1', set(df['Name1']))
 data1 = df[df['Name1']== name1]
 name2 = st.selectbox('Choose Drug 2', set(data1['Name2']))
 st.write('Drug1 you selected is:', name1)
@@ -120,7 +126,7 @@ dose_response.layout.annotations[0]["font"] = {'size': 20}
 dose_response.layout.annotations[1]["font"] = {'size': 20}
 #dose_response.show()
 
-st.plotly_chart(dose_response)
+st.plotly_chart(dose_response,use_container_width=True)
 
 # ##############fig 2################
 # #IC50 plots
@@ -133,6 +139,13 @@ color_palette=['rgb(227,74,51)']
 blues =  compiled_avg[['Group1', 'Group2']].max().max()-1
 start_blue = [int(x) for x in px.colors.sequential.Blues[2].replace('rgb(','').replace(")","").split(",")]
 end_blue = [int(x) for x in px.colors.sequential.Blues[-1].replace('rgb(','').replace(")","").split(",")]
+
+# st.write('color palette is ', color_palette)
+# st.write('blues is ', blues)
+# st.write('start blue is', start_blue)
+# st.write('end blue is ', end_blue)
+
+
 converted_color = np.vstack([ np.linspace(x[0], x[1], blues) for x in zip(start_blue, end_blue)]).astype(int)
 for i in range(0, converted_color.shape[1]):
     color_palette.append("rgb(" + ",".join([str(x) for x in converted_color[:,i]]) + ")")
@@ -145,8 +158,11 @@ Y1 = np.zeros(shape=(len(X1), len(set(compiled_avg.Group2))))
 
 for i in set(compiled_avg.Group2):
     temp = compiled_avg[compiled_avg.Group2 == i]
-    glm_model = smf.glm('Mean ~ Drug1', temp, family=sm.families.Binomial()).fit()
-    y = glm_model.predict(exog=dict(Drug1=X1))
+    if len(set(temp['Mean'])) > 1:
+        glm_model = smf.glm('Mean ~ Drug1', temp, family=sm.families.Binomial()).fit()
+        y = glm_model.predict(exog=dict(Drug1=X1))
+    else:
+        y = np.ones(len(X1)) * list(set(temp['Mean']))
     y[(X1 < temp.Drug1.min()) & (X1 > temp.Drug1.max())] = np.nan
     Y1[:,i-1] = np.array(y)
 
@@ -158,8 +174,11 @@ Y2 = np.zeros(shape=(len(X2), len(set(compiled_avg.Group1))))
 
 for i in set(compiled_avg.Group1):
     temp = compiled_avg[compiled_avg.Group1 == i]
-    glm_model = smf.glm('Mean ~ Drug2', temp, family=sm.families.Binomial()).fit()
-    y = glm_model.predict(exog=dict(Drug2=X2))
+    if len(set(temp['Mean'])) > 1:
+        glm_model = smf.glm('Mean ~ Drug2', temp, family=sm.families.Binomial()).fit()
+        y = glm_model.predict(exog=dict(Drug2=X2))
+    else:
+        y = np.ones(len(X2)) * list(set(temp['Mean']))
     y[(X2 < temp.Drug2.min()) & (X2 > temp.Drug2.max())] = np.nan
     Y2[:,i-1] = np.array(y)
 
@@ -221,7 +240,7 @@ IC50.layout.annotations[0]["font"] = {'size': 20}
 IC50.layout.annotations[1]["font"] = {'size': 20}
 #IC50.show()
 
-st.plotly_chart(IC50)
+st.plotly_chart(IC50, use_container_width=True)
 
 #FA plots
 FAdata = compiled_subset.groupby(['Name1','Drug1','Name2','Drug2'], as_index=False).agg({'Fa': ['mean']})
@@ -252,7 +271,7 @@ FAplot.update_layout(title = dict(text='Percentage Affected', x=0.5, font_size=3
 
 #FAplot.show()
 
-st.plotly_chart(FAplot)
+st.plotly_chart(FAplot, use_container_width=True)
 
 #Median Effect plot
 # Get the slope and intercept
@@ -327,16 +346,16 @@ ymin = np.log10(min(individual_subset.FaFu)) - 0.1
 ymax = np.log10(max(individual_subset.FaFu)) + 0.1
 xmin = np.log10(min(drug1_min,drug2_min))
 
-med_effect.add_trace(go.Scatter(x= [xmin+0.1],
-                                y= [ymax-0.1],
+med_effect.add_trace(go.Scatter(x= [xmin+0.2],
+                                y= [ymax-0.2],
                                 mode='text',
                                 text= 'adj. R<sup>2</sup> = '+ str(np.round(d1_model.rsquared_adj,2)),
                                 textfont = dict(color='red',
                                                 size=20)),
                      row=1,col=1)
 
-med_effect.add_trace(go.Scatter(x= [xmin+0.1],
-                                y= [ymax-0.1],
+med_effect.add_trace(go.Scatter(x= [xmin+0.2],
+                                y= [ymax-0.2],
                                 mode='text',
                                 text= 'adj. R<sup>2</sup> = '+ str(np.round(d2_model.rsquared_adj,2)),
                                 textfont = dict(color='blue',
@@ -349,7 +368,9 @@ med_effect.update_layout(showlegend=False)
 med_effect.layout.annotations[0]["font"] = {'size': 20}
 med_effect.layout.annotations[1]["font"] = {'size': 20}
 #med_effect.show()
-st.plotly_chart(med_effect)
+st.plotly_chart(med_effect, use_container_width=True)
+
+
 #Isobologram
 cell_dat = compiled_subset[(compiled_subset.Drug1 != compiled_subset.min1/2) & (compiled_subset.Drug2 != compiled_subset.min2/2)].groupby(['Drug1', 'Drug2', 'Name1', 'Name2'],as_index=False).agg({'Fa': 'mean', 'Fu': 'mean'})
 cell_dat.columns = ['Drug1','Drug2', 'Name1', 'Name2', 'Fa', 'Fu']
@@ -477,4 +498,4 @@ isobologram.update_layout(title = dict(x=0.5, font_size=30),
                           template='simple_white')
 
 #isobologram.show()
-st.plotly_chart(isobologram)
+st.plotly_chart(isobologram, use_container_width=True)
